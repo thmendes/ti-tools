@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Buckets
+Parameters:
+   StageName:
+      Description: The stage of the stack
+      Type: String
+      Default: dev
+      MinLength: '1'
+      MaxLength: '16'
+      AllowedPattern: '[a-zA-Z][a-zA-Z0-9\-]*'
+      ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+Resources:
+  userBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: "ti:app"
+          Value: "Toro Investimentos"
+        - Key: "ti:stage-name"
+          Value: !Ref StageName
+  userBucketName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - '/'
+        - - ''
+          - !Ref StageName
+          - buckets
+          - userBucketName
+      Type: String
+      Value: !Ref "userBucket"
+      Description: !GetAtt "userBucket.Arn"
+      Tags:
+        "ti:app": "Toro Investimentos"
+        "ti:stage-name": !Ref StageName
+  userBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: WebSitePolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref userBucket
+                - /*
+      Bucket: !Ref userBucket 

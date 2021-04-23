@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata: 
+  License: Apache-2.0
+Description: 'AWS CloudFormation Template DynamoDB_Table: Vouchers'
+Parameters:
+  StageName:
+    Description: The stage of the stack
+    Default: dev
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9\-]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '5'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '5'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+Resources:
+  Account:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${StageName}-ti-account
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+  DynamoTableParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - '/'
+        - - ''
+          - !Ref StageName
+          - 'dynamoDB'
+          - 'table'
+          - 'account'
+      Type: String
+      Value: !Ref Account
+      Tags:
+        "ti:app": "Toro Investimentos"
+        "ti:stage-name": !Ref StageName
+  DynamoTableParameterArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - '/'
+        - - ''
+          - !Ref StageName
+          - 'dynamoDB'
+          - 'table'
+          - 'account'
+          - 'arn'
+      Type: String
+      Value: !GetAtt "Account.Arn"
+      Tags:
+        "ti:app": "Toro Investimentos"
+        "ti:stage-name": !Ref StageName
+Outputs:
+  TableName:
+    Value: !Ref 'Account'
+    Description: Table name of the newly created DynamoDB table
